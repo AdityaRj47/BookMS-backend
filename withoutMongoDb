@@ -1,0 +1,124 @@
+//without MongoDB: in-memory DB-->Array(books)--(Why, MongoDB?)- because array is TEMPORARY
+
+//import required modules
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+
+//initialise express app
+//app variable will handle routing and middleware
+const app = express();
+
+//middleware config
+app.use(bodyParser.json());
+//Enable CORS for all origin
+app.use(cors());
+
+//Create in memory database
+let books = [];
+
+//Routes
+
+//1. Get all books
+app.get("/books", (req,res) =>{
+    res.json({ success: true, data: books});
+});
+
+//2. Add new books
+ //Extract book details from the req.body
+ //Validate if all req. fields are provided....(title, author, year)
+  //Assign a unique id to the book
+  //Add the new book to the book array
+  //Return success msg with added book
+
+  //req.body--> Access data sent in the POST req.body
+  //res.status(400)--> bad request
+  // books.push()--> Add new books to books array
+
+  app.post("/books", (req, res) =>{
+    const {title, author, year} = req.body;
+    if(!title || !author || !year){
+        return res
+           .status(400)
+           .json({success: false, message: "All fields required!"});
+    }
+
+    const newBook = { 
+        id: books.length + 1,
+        title,
+        author,
+        year              
+    };
+
+    books.push(newBook);
+    //201: Successfully Created
+    res
+       .status(201)
+       .json({success: true, message: "Books Added!!", data: newBook});
+       
+  });
+
+//3.Get the specific book by ID
+//Extract the book ID from the route parameter(req.params.id)
+//Search that book from books array using find()
+//Return the book details if found or 404 error, if not
+
+//req.params(:id)
+//parseInt(): Converts the ID(string) to integer
+//books.find(): to find the respective books required
+
+app.get("/books/:id", (req,res) =>{
+    const bookId = parseInt(req.params.id);
+    const book = books.find((b) => b.id === bookId)
+    if(!bookId){
+        return res 
+          .status(404)
+          .json({success: false, message:"Entered Books Not Found"});
+    }
+    res.json({success: true, message:"Book Retrieved successfully", data: book});
+});
+
+//4.Update the books by ID
+ app.put("/books/:id", (req,res)=>{
+    const bookId = parseInt(req.params.id);
+    const {title, author, year} = req.body;
+    const bookIndex = books.findIndex((b) => b.id === bookId);
+    if(bookIndex === -1 ){
+        return res
+        .status(404)
+        .json({success: false, message:"Entered Book Not Found"});
+    }
+    const updateBook = {
+        id:bookId,
+        title: title || books[bookIndex].title,
+        author: author || books[bookIndex].author,
+        year: year || books[bookIndex].year
+    }
+    books[bookIndex] = updateBook;
+    res.json({success: true, message: "Book Updated Successfully", data: updateBook});
+ });
+
+ //5.Delete book by ID
+ //req.params.id
+ //parseInt()
+ //findIndex()
+ //books.splice()--> deletes a particular object at respective INDEX no. of array
+  app.delete("/books/:id", (req, res) =>{
+    const bookId = parseInt(req.params.id);
+    const bookIndex = books.findIndex((b) => b.id === bookId);
+    if(bookIndex === -1 ){
+        return res
+        .status(404)
+        .json({success: false, message:"Entered Book Not Found"});
+    }
+    books.splice(bookIndex,1); //(_,1)--> makes sure only 1 book is deleted at a time
+    res.json({success: true, message: "Book Deleted Successfully"});
+
+  });
+
+  //start the server
+   const PORT = 4000;
+   app.listen(PORT , ()=>{
+      console.log(`Server is running on http://localhost:${PORT}`);
+
+   });
